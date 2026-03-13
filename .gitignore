@@ -4,3 +4,7 @@ venv/*
 .venv
 .venv/
 .venv/*
+*.pyc
+*.pyo
+*.pyd
+.Python
