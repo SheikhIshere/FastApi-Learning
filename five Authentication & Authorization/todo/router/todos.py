@@ -5,7 +5,10 @@ from typing import Annotated
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/todos",
+    tags=["todos"],
+)
 
 def get_db():
     db = SessionLocal()
@@ -19,12 +22,12 @@ db_dependence = Annotated[Session, Depends(get_db)]
 
 
 # get request for all data
-@router.get('/todos/', status_code=status.HTTP_200_OK)
+@router.get('/', status_code=status.HTTP_200_OK)
 async def get_all_todo(db: db_dependence):
     return db.query(Todos).all()
 
 # get specific todo
-@router.get('/todos/{todo_id}', status_code=status.HTTP_200_OK)
+@router.get('/{todo_id}', status_code=status.HTTP_200_OK)
 async def get_all_todo_by_id(db: db_dependence, todo_id:int = Path(gt=0)):
     data = db.query(Todos).filter(Todos.id == todo_id).first()
 
@@ -41,7 +44,7 @@ class TodoFormate(BaseModel):
     complete: bool = False
 
 # post a new todo
-@router.post('/todos/', status_code=status.HTTP_201_CREATED)
+@router.post('/', status_code=status.HTTP_201_CREATED)
 async def create_todo(db: db_dependence, todo_request: TodoFormate):
     todo_model = Todos(**todo_request.model_dump())
     db.add(todo_model)
@@ -49,7 +52,7 @@ async def create_todo(db: db_dependence, todo_request: TodoFormate):
     return todo_model
 
 # update a todo
-@router.put('/todos/{todo_id}', status_code=status.HTTP_200_OK)
+@router.put('/{todo_id}', status_code=status.HTTP_200_OK)
 async def update_todo(db: db_dependence,
                       todo_request: TodoFormate,
                       todo_id: int = Path(gt=0)
@@ -70,7 +73,7 @@ async def update_todo(db: db_dependence,
 
 
 # delete a todo
-@router.delete('/todos/{todo_id}', status_code=status.HTTP_204_NO_CONTENT)
+@router.delete('/{todo_id}', status_code=status.HTTP_204_NO_CONTENT)
 async def delete_todo(db: db_dependence,
                       todo_id: int = Path(gt=0)
                       ):
