@@ -1,25 +1,15 @@
 from fastapi import APIRouter, Depends, status, HTTPException
+from pydantic import BaseModel
 from models import Users
 from database import SessionLocal
 from typing import Annotated
-from sqlalchemy.orm import Session
-from .auth import get_current_user, hash_password, PasswordChange
+from dependencies import user_dependence, db_dependence
+from .auth import hash_password
 
 router = APIRouter(
     prefix="/user",
     tags=["user"],
 )
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
-db_dependence = Annotated[Session, Depends(get_db)]
-user_dependence = Annotated[dict, Depends(get_current_user)] 
 
 # get user info
 @router.get('/', status_code=status.HTTP_200_OK)
@@ -30,6 +20,9 @@ async def get_user_info(user: user_dependence, db: db_dependence):
     return db.query(Users).filter(Users.id == user.get('id')).first()
 
 # change password
+class PasswordChange(BaseModel):
+    password: str
+
 @router.put('/change-password', status_code=status.HTTP_200_OK)
 async def change_password(user: user_dependence, db: db_dependence, payload: PasswordChange):
     if user is None:

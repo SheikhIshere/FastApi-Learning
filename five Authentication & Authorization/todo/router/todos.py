@@ -1,27 +1,13 @@
-from fastapi import APIRouter, Depends, status, Path, HTTPException
+from fastapi import APIRouter, status, Path, HTTPException
 from models import Todos
-from database import SessionLocal
-from typing import Annotated
-from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
-from .auth import get_current_user
+from dependencies import db_dependence, user_dependence
+
 
 router = APIRouter(
     prefix="/todos",
     tags=["todos"],
 )
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
-db_dependence = Annotated[Session, Depends(get_db)]
-user_dependence = Annotated[dict, Depends(get_current_user)] 
-
 
 # get request for all data
 @router.get('/', status_code=status.HTTP_200_OK)

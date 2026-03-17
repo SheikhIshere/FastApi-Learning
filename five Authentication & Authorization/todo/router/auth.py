@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends, status
 from pydantic import BaseModel
-from models import Users
+from dependencies import user_dependence, db_dependence, get_current_user
+from models import Todos, Users
 from passlib.context import CryptContext
 from database import SessionLocal
 from sqlalchemy.orm import Session
@@ -8,18 +9,15 @@ from typing import Annotated
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
- 
+
+user_dependence = Annotated[dict, Depends(get_current_user)] 
+
 router = APIRouter(
     prefix="/auth",
     tags=["auth"],
 )
 hash_context = CryptContext(schemes=["argon2"], deprecated="auto")
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl="auth/token")
-
-
-SECRET_KEY = "93e09eafababf98903ca94bfd959181d467be16f366487bbff0de14a187f7a27"  # TODO: Use environment variable in production
-ALGORITHM = "HS256"
-
 
 
 def hash_password(password: str) -> str:
@@ -39,6 +37,7 @@ def get_db():
 
 
 db_dependence = Annotated[Session, Depends(get_db)]
+
 
 
 def authenticate_user(username: str, password: str, db: db_dependence):
@@ -64,6 +63,7 @@ class UserCreate(BaseModel):
     last_name: str
     password: str
     role: str
+    phone_number: str
 
 
 # Token creation class
@@ -82,35 +82,13 @@ def create_user(db: db_dependence, user: UserCreate):
         hashed_password=hash_password(user.password),
         role=user.role,
         is_active=True, 
+        phone_number=user.phone_number
     )
     db.add(new_user)
     db.commit()
     return {"message": "User created successfully"}
     
 
-# @router.get("/", status_code=status.HTTP_200_OK)
-# def read_root():
-#     return {"user": "authenticated"}
-
-
-async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get('sub')
-        user_id: int = payload.get('id')
-        user_role: str = payload.get('role')
-        if username is None or user_id is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Could not validate user",
-            )
-        
-        return {'username': username, 'id': user_id, 'role': user_role}
-    except JWTError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate user",
-        )
 
 
 @router.post('/token', response_model=Token)
@@ -127,7 +105,22 @@ async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm,
 
     return {'access_token': token, 'token_type': 'bearer'}
 
-# change password
-class PasswordChange(BaseModel):
-    password: str
+# change phone number
+@router.patch('/change/phone-number/', status_code=status.HTTP_200_OK)
+async def change_phone_number(user:user_dependence, db: db_dependence, phone_number: str):
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='authentication failed')
+    
+    try: 
+        user_model = db.query(Users).filter(Users.id == user.get('id')).first()
+        if not user_model:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='User not found')
+        
+        user_model.phone_number = phone_number
+        db.commit()
+        return {"message": "Phone number updated successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'{e}')
+
+
 

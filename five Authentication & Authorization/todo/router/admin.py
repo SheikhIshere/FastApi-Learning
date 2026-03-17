@@ -4,23 +4,12 @@ from database import SessionLocal
 from typing import Annotated
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
-from .auth import get_current_user
+from dependencies import user_dependence, db_dependence
 
 router = APIRouter(
     prefix="/admin",
     tags=["admin"],
-)
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
-db_dependence = Annotated[Session, Depends(get_db)]
-user_dependence = Annotated[dict, Depends(get_current_user)] 
+) 
 
 @router.get("/")
 async def admin_read_all(user: user_dependence, db: db_dependence):
