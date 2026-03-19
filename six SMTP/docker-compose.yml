@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:///./app.db
+      - SECRET_KEY=your-super-secret-key-change-in-production
+      - SMTP_HOST=smtp.gmail.com
+      - SMTP_PORT=587
+      - SMTP_USERNAME=your-email@gmail.com
+      - SMTP_PASSWORD=your-app-password
+      - SMTP_USE_TLS=true
+    volumes:
+      - ./app.db:/app/app.db
+    restart: unless-stopped
+
+  # Optional: Add a database service if you want to use PostgreSQL
+  # db:
+  #   image: postgres:15
+  #   environment:
+  #     POSTGRES_DB: fastapi_db
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: password
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
+
+# volumes:
+#   postgres_data:
