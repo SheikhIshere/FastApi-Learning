@@ -24,7 +24,7 @@
 
 ```bash
 # Clone and navigate
-git clone <[repo-url](https://github.com/SheikhIshere/FastApi-Learning.git)>
+git clone https://github.com/SheikhIshere/FastApi-Learning.git
 cd FastApi-Learning
 
 # Start with Module 1
